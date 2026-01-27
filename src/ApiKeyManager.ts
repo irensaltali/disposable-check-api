@@ -6,14 +6,35 @@ interface ApiKeyData {
     createdAt: string;
     requestsToday: number;
     lastResetDate: string;
+    totalUsage: number;         // Lifetime total API calls
+    customDailyLimit?: number;  // Per-user override, undefined = use default
 }
 
-const DAILY_LIMIT = 1000;
+// Default daily limit for all users
+const DEFAULT_DAILY_LIMIT = 1000;
+// Maximum allowed daily limit (admin can set up to this)
+const MAX_DAILY_LIMIT = 1000000;
+
+// Admin response type for account info
+export interface AdminAccountInfo {
+    email: string;
+    createdAt: string;
+    totalUsage: number;
+    requestsToday: number;
+    dailyLimit: number;
+    customDailyLimit?: number;
+}
 
 export class ApiKeyManager extends DurableObject {
     private async getKeyData(email: string): Promise<ApiKeyData | null> {
         const data = await this.ctx.storage.get<ApiKeyData>(`key:${email}`);
-        return data || null;
+        if (!data) return null;
+
+        // Backward compatibility: default totalUsage to 0 if missing
+        if (data.totalUsage === undefined) {
+            data.totalUsage = 0;
+        }
+        return data;
     }
 
     private async setKeyData(email: string, data: ApiKeyData): Promise<void> {
@@ -50,6 +71,7 @@ export class ApiKeyManager extends DurableObject {
             createdAt: now,
             requestsToday: 0,
             lastResetDate: this.getTodayDate(),
+            totalUsage: 0,
         });
 
         return { apiKey, isNew: true };
@@ -80,8 +102,11 @@ export class ApiKeyManager extends DurableObject {
             data.lastResetDate = today;
         }
 
+        // Get effective daily limit (custom or default)
+        const effectiveLimit = data.customDailyLimit ?? DEFAULT_DAILY_LIMIT;
+
         // Check rate limit
-        if (data.requestsToday >= DAILY_LIMIT) {
+        if (data.requestsToday >= effectiveLimit) {
             return {
                 valid: false,
                 error: "Daily rate limit exceeded",
@@ -89,15 +114,16 @@ export class ApiKeyManager extends DurableObject {
             };
         }
 
-        // Increment user counter and global counter
+        // Increment user counter, total usage, and global counter
         data.requestsToday++;
+        data.totalUsage = (data.totalUsage || 0) + 1;
         await this.setKeyData(email, data);
         await this.incrementGlobalCheckCount();
 
         return {
             valid: true,
             email,
-            remaining: DAILY_LIMIT - data.requestsToday,
+            remaining: effectiveLimit - data.requestsToday,
         };
     }
 
@@ -115,11 +141,12 @@ export class ApiKeyManager extends DurableObject {
 
         const today = this.getTodayDate();
         const requestsToday = data.lastResetDate === today ? data.requestsToday : 0;
+        const dailyLimit = data.customDailyLimit ?? DEFAULT_DAILY_LIMIT;
 
         return {
             exists: true,
             requestsToday,
-            dailyLimit: DAILY_LIMIT,
+            dailyLimit,
             createdAt: data.createdAt,
         };
     }
@@ -146,6 +173,132 @@ export class ApiKeyManager extends DurableObject {
         return {
             totalEmailsChecked,
             totalApiKeys,
+        };
+    }
+
+    // ==================== ADMIN METHODS ====================
+
+    /**
+     * Get account info by email (admin only)
+     */
+    async getAccountByEmail(email: string): Promise<AdminAccountInfo | null> {
+        const data = await this.getKeyData(email);
+        if (!data) return null;
+
+        const today = this.getTodayDate();
+        const requestsToday = data.lastResetDate === today ? data.requestsToday : 0;
+        const dailyLimit = data.customDailyLimit ?? DEFAULT_DAILY_LIMIT;
+
+        return {
+            email: data.email,
+            createdAt: data.createdAt,
+            totalUsage: data.totalUsage || 0,
+            requestsToday,
+            dailyLimit,
+            customDailyLimit: data.customDailyLimit,
+        };
+    }
+
+    /**
+     * Update daily limit for a specific email (admin only)
+     * Returns the previous limit, or null if email not found
+     */
+    async updateDailyLimit(
+        email: string,
+        newLimit: number
+    ): Promise<{ previousLimit: number; newLimit: number } | null> {
+        const data = await this.getKeyData(email);
+        if (!data) return null;
+
+        // Validate the new limit
+        const clampedLimit = Math.max(0, Math.min(newLimit, MAX_DAILY_LIMIT));
+        const previousLimit = data.customDailyLimit ?? DEFAULT_DAILY_LIMIT;
+
+        // Set custom limit (or remove if it equals default)
+        if (clampedLimit === DEFAULT_DAILY_LIMIT) {
+            delete data.customDailyLimit;
+        } else {
+            data.customDailyLimit = clampedLimit;
+        }
+
+        await this.setKeyData(email, data);
+
+        return {
+            previousLimit,
+            newLimit: clampedLimit,
+        };
+    }
+
+    /**
+     * List all accounts with optional filters (admin only)
+     * Supports pagination via limit and offset
+     */
+    async listAccounts(filters: {
+        registeredWithinDays?: number;
+        minUsageCount?: number;
+        limit?: number;
+        offset?: number;
+    }): Promise<{ accounts: AdminAccountInfo[]; totalCount: number }> {
+        const { registeredWithinDays, minUsageCount, limit = 100, offset = 0 } = filters;
+
+        // Cap the limit to prevent abuse
+        const cappedLimit = Math.min(limit, 1000);
+
+        // Get all keys
+        const entries = await this.ctx.storage.list<ApiKeyData>({ prefix: "key:" });
+        const today = this.getTodayDate();
+        const now = Date.now();
+
+        // Calculate cutoff date if filtering by registration date
+        const cutoffTime = registeredWithinDays !== undefined
+            ? now - registeredWithinDays * 24 * 60 * 60 * 1000
+            : 0;
+
+        const allAccounts: AdminAccountInfo[] = [];
+
+        for (const [, data] of entries) {
+            if (!data) continue;
+
+            // Parse creation date for filtering
+            const createdTime = new Date(data.createdAt).getTime();
+
+            // Filter: registered within N days
+            if (registeredWithinDays !== undefined && createdTime < cutoffTime) {
+                continue;
+            }
+
+            // Get current requests today (reset if new day)
+            const requestsToday = data.lastResetDate === today ? data.requestsToday : 0;
+            const totalUsage = data.totalUsage || 0;
+
+            // Filter: minimum usage count
+            if (minUsageCount !== undefined && totalUsage < minUsageCount) {
+                continue;
+            }
+
+            const dailyLimit = data.customDailyLimit ?? DEFAULT_DAILY_LIMIT;
+
+            allAccounts.push({
+                email: data.email,
+                createdAt: data.createdAt,
+                totalUsage,
+                requestsToday,
+                dailyLimit,
+                customDailyLimit: data.customDailyLimit,
+            });
+        }
+
+        // Sort by creation date descending (newest first)
+        allAccounts.sort((a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        // Apply pagination
+        const paginatedAccounts = allAccounts.slice(offset, offset + cappedLimit);
+
+        return {
+            accounts: paginatedAccounts,
+            totalCount: allAccounts.length,
         };
     }
 }

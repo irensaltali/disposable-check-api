@@ -47,3 +47,45 @@ export const StatsResponse = z.object({
 	total_disposable_domains: Num({ example: 4521 }),
 	community_reports: Num({ example: 23 }),
 });
+
+// ==================== ADMIN API SCHEMAS ====================
+
+// Admin account info response
+export const AdminAccountResponse = z.object({
+	email: Str({ example: "developer@company.com" }),
+	created_at: DateTime(),
+	total_usage: Num({ example: 15234 }),
+	requests_today: Num({ example: 42 }),
+	daily_limit: Num({ example: 1000 }),
+	custom_daily_limit: Num({ example: 5000 }).optional(),
+});
+
+// Admin account list response with pagination
+export const AdminAccountListResponse = z.object({
+	accounts: z.array(AdminAccountResponse),
+	total_count: Num({ example: 150 }),
+	limit: Num({ example: 100 }),
+	offset: Num({ example: 0 }),
+});
+
+// Update limit request
+export const UpdateLimitRequest = z.object({
+	daily_limit: Num({
+		description: "New daily usage limit (0 to 1,000,000)",
+		example: 5000
+	}).min(0).max(1000000),
+});
+
+// Update limit response
+export const UpdateLimitResponse = z.object({
+	success: Bool(),
+	previous_limit: Num({ example: 1000 }),
+	new_limit: Num({ example: 5000 }),
+});
+
+// Unauthorized error response
+export const UnauthorizedResponse = z.object({
+	error: Str({ example: "Unauthorized" }),
+	code: Str({ example: "UNAUTHORIZED" }),
+});
+

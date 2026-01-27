@@ -5,7 +5,13 @@ import { EmailCheck } from "./endpoints/emailCheck";
 import { CreateKey } from "./endpoints/createKey";
 import { GetKeyInfo } from "./endpoints/getKeyInfo";
 import { GetStats } from "./endpoints/stats";
+import {
+	getAdminAccount,
+	updateAccountLimit,
+	listAdminAccounts,
+} from "./endpoints/admin/handlers";
 import { updateDomainList } from "./domainList";
+import { ADMIN_SECRET_HEADER } from "./middleware/adminAuth";
 // Env is globally defined in worker-configuration.d.ts
 
 // Export Durable Object
@@ -25,8 +31,8 @@ app.use(
 			"http://localhost:5173",
 			"http://localhost:8787",
 		],
-		allowMethods: ["GET", "POST", "OPTIONS"],
-		allowHeaders: ["Content-Type", "X-API-Key"],
+		allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
+		allowHeaders: ["Content-Type", "X-API-Key", ADMIN_SECRET_HEADER],
 		maxAge: 86400,
 	})
 );
@@ -50,11 +56,17 @@ const openapi = fromHono(app, {
 	},
 });
 
-// Endpoints - /api prefix matches the production route pattern
+// Public Endpoints - /api prefix matches the production route pattern
 openapi.get("/api/v1/check", EmailCheck);
 openapi.post("/api/v1/keys", CreateKey);
 openapi.get("/api/v1/keys/:email", GetKeyInfo);
 openapi.get("/api/v1/stats", GetStats);
+
+// Admin Endpoints - NOT in public OpenAPI docs
+// These are registered directly on Hono, not through chanfana's openapi
+app.get("/api/v1/admin/accounts/:email", getAdminAccount);
+app.patch("/api/v1/admin/accounts/:email/limit", updateAccountLimit);
+app.get("/api/v1/admin/accounts", listAdminAccounts);
 
 export default {
 	fetch: app.fetch,
