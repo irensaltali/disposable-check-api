@@ -17,7 +17,7 @@ export class EmailCheck extends OpenAPIRoute {
         summary: "Check if an email address is disposable",
         description:
             "Returns whether the email uses a known disposable domain.",
-        security: [{ apiKey: [] }],
+        // security: [{ apiKey: [] }],
         request: {
             query: z.object({
                 email: Str({
@@ -26,8 +26,8 @@ export class EmailCheck extends OpenAPIRoute {
                 }),
             }),
             headers: z.object({
-                "x-api-key": Str({ description: "Your API key" }).optional(),
-            }),
+                "x-api-key": Str({ description: "Your API key" }).optional().nullable(),
+            }).passthrough(),
         },
         responses: {
             "200": {
@@ -78,16 +78,22 @@ export class EmailCheck extends OpenAPIRoute {
                 );
             }
         } else {
-            // Check for trusted origin for website usage
+            // Check for trusted origin or referer for website usage
+            // curl commands often send Referer but not Origin
             const origin = c.req.header("Origin");
-            if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+            const referer = c.req.header("Referer");
+
+            const isAllowedOrigin = origin && ALLOWED_ORIGINS.includes(origin);
+            const isAllowedReferer = referer && ALLOWED_ORIGINS.some(allowed => referer.startsWith(allowed));
+
+            if (!isAllowedOrigin && !isAllowedReferer) {
                 return c.json(
                     { error: "Missing API key", code: "UNAUTHORIZED" },
                     401
                 );
             }
 
-            // Valid origin, increment global stats
+            // Valid origin/referer, increment global stats
             await stub.incrementGlobalCheckCount();
         }
 
