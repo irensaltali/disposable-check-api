@@ -49,10 +49,10 @@ const openapi = fromHono(app, {
 	},
 });
 
-// Endpoints
-openapi.get("/v1/check", EmailCheck);
-openapi.post("/v1/keys", CreateKey);
-openapi.get("/v1/keys/:email", GetKeyInfo);
+// Endpoints - /api prefix matches the production route pattern
+openapi.get("/api/v1/check", EmailCheck);
+openapi.post("/api/v1/keys", CreateKey);
+openapi.get("/api/v1/keys/:email", GetKeyInfo);
 
 export default {
 	fetch: app.fetch,

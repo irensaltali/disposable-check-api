@@ -12,7 +12,7 @@
 	"r2_buckets": [
 		{
 			"binding": "DOMAINS_BUCKET",
-			"bucket_name": "disposable-domains-staging"
+			"bucket_name": "disposable-domains"
 		}
 	],
 	"durable_objects": {
