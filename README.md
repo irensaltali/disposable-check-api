@@ -1,9 +1,21 @@
-# 🛡️ DisposableCheck API
+<div align="center">
+  <a href="https://disposablecheck.irensaltali.com">
+    <img src="../disposable-check/public/logo.png" alt="DisposableCheck Logo" width="120" height="120">
+  </a>
 
-**Free Disposable Email Detection API**
+  # 🛡️ DisposableCheck API
 
-[![API Docs](https://img.shields.io/badge/API-Documentation-green)](https://disposablecheck.irensaltali.com/api)
-[![OpenAPI](https://img.shields.io/badge/OpenAPI-3.1-orange)](https://disposablecheck.irensaltali.com/api)
+  **Free Disposable Email Detection API**
+
+  <a href="https://www.producthunt.com/products/disposablecheck-disposable-email-check?launch=disposablecheck-disposable-email-check" target="_blank">
+    <img src="https://img.shields.io/badge/Product_Hunt-Launch-orange?logo=product-hunt&style=flat-square" alt="Product Hunt Launch">
+  </a>
+
+  [![API Docs](https://img.shields.io/badge/API-Documentation-green?style=flat-square)](https://disposablecheck.irensaltali.com/api)
+  [![OpenAPI](https://img.shields.io/badge/OpenAPI-3.1-orange?style=flat-square)](https://disposablecheck.irensaltali.com/api)
+</div>
+
+![DisposableCheck Banner](../disposable-check/public/og-image.png)
 
 A fast, free API to detect disposable email addresses. Built on Cloudflare Workers for global low-latency performance.
 
