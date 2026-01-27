@@ -41,3 +41,9 @@ export const ErrorResponse = z.object({
 	code: Str({ example: "INVALID_EMAIL" }),
 });
 
+// Stats response
+export const StatsResponse = z.object({
+	total_emails_checked: Num({ example: 1247893 }),
+	total_disposable_domains: Num({ example: 4521 }),
+	community_reports: Num({ example: 23 }),
+});

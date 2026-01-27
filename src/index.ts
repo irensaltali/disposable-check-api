@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { EmailCheck } from "./endpoints/emailCheck";
 import { CreateKey } from "./endpoints/createKey";
 import { GetKeyInfo } from "./endpoints/getKeyInfo";
+import { GetStats } from "./endpoints/stats";
 import { updateDomainList } from "./domainList";
 // Env is globally defined in worker-configuration.d.ts
 
@@ -53,6 +54,7 @@ const openapi = fromHono(app, {
 openapi.get("/api/v1/check", EmailCheck);
 openapi.post("/api/v1/keys", CreateKey);
 openapi.get("/api/v1/keys/:email", GetKeyInfo);
+openapi.get("/api/v1/stats", GetStats);
 
 export default {
 	fetch: app.fetch,

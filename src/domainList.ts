@@ -79,3 +79,14 @@ export async function getDisposableDomains(env: Env): Promise<Set<string>> {
 
     return cachedDomains;
 }
+
+// Get the count of disposable domains from R2 metadata
+export async function getDisposableDomainsCount(env: Env): Promise<number> {
+    const object = await env.DOMAINS_BUCKET.head(R2_KEY);
+    if (!object) {
+        return 0;
+    }
+
+    const countStr = object.customMetadata?.count;
+    return countStr ? parseInt(countStr, 10) : 0;
+}

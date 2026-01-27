@@ -150,6 +150,38 @@ curl -X GET \
 
 ---
 
+### 4. Get Platform Statistics
+
+Get aggregate platform statistics including total emails checked and domains tracked.
+
+**Endpoint**: `GET /api/v1/stats`
+
+**Authentication**: Not required
+
+**Example Request**:
+```bash
+curl -X GET \
+  'https://disposablecheck.irensaltali.com/api/v1/stats'
+```
+
+**Success Response** (200):
+```json
+{
+  "total_emails_checked": 1247893,
+  "total_disposable_domains": 4521,
+  "community_reports": 23
+}
+```
+
+**Response Fields**:
+| Field | Type | Description |
+|-------|------|-------------|
+| `total_emails_checked` | number | Total number of email checks performed via the API |
+| `total_disposable_domains` | number | Total number of disposable domains in the blocklist |
+| `community_reports` | number | Number of community-reported domains |
+
+---
+
 ## Rate Limits
 
 | Tier | Daily Limit | Requirements |

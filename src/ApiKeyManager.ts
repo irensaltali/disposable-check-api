@@ -89,9 +89,10 @@ export class ApiKeyManager extends DurableObject {
             };
         }
 
-        // Increment and save
+        // Increment user counter and global counter
         data.requestsToday++;
         await this.setKeyData(email, data);
+        await this.incrementGlobalCheckCount();
 
         return {
             valid: true,
@@ -120,6 +121,31 @@ export class ApiKeyManager extends DurableObject {
             requestsToday,
             dailyLimit: DAILY_LIMIT,
             createdAt: data.createdAt,
+        };
+    }
+
+    // Increment global email check counter
+    async incrementGlobalCheckCount(): Promise<number> {
+        const current = await this.ctx.storage.get<number>("global:totalEmailsChecked") || 0;
+        const newCount = current + 1;
+        await this.ctx.storage.put("global:totalEmailsChecked", newCount);
+        return newCount;
+    }
+
+    // Get global stats
+    async getGlobalStats(): Promise<{
+        totalEmailsChecked: number;
+        totalApiKeys: number;
+    }> {
+        const totalEmailsChecked = await this.ctx.storage.get<number>("global:totalEmailsChecked") || 0;
+
+        // Count API keys by listing all key: prefixed entries
+        const entries = await this.ctx.storage.list({ prefix: "key:" });
+        const totalApiKeys = entries.size;
+
+        return {
+            totalEmailsChecked,
+            totalApiKeys,
         };
     }
 }
