@@ -1,0 +1,97 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "disposable-check-api",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-01-27",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"observability": {
+		"enabled": true
+	},
+	"r2_buckets": [
+		{
+			"binding": "DOMAINS_BUCKET",
+			"bucket_name": "disposable-domains-staging"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "API_KEY_MANAGER",
+				"class_name": "ApiKeyManager"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_classes": [
+				"ApiKeyManager"
+			]
+		}
+	],
+	"triggers": {
+		"crons": [
+			"0 4 * * *"
+		]
+	},
+	"env": {
+		"staging": {
+			"name": "disposable-check-api-staging",
+			"r2_buckets": [
+				{
+					"binding": "DOMAINS_BUCKET",
+					"bucket_name": "disposable-domains-staging"
+				}
+			],
+			"durable_objects": {
+				"bindings": [
+					{
+						"name": "API_KEY_MANAGER",
+						"class_name": "ApiKeyManagerStaging"
+					}
+				]
+			},
+			"migrations": [
+				{
+					"tag": "v1",
+					"new_classes": [
+						"ApiKeyManagerStaging"
+					]
+				}
+			]
+		},
+		"production": {
+			"name": "disposable-check-api",
+			"r2_buckets": [
+				{
+					"binding": "DOMAINS_BUCKET",
+					"bucket_name": "disposable-domains"
+				}
+			],
+			"durable_objects": {
+				"bindings": [
+					{
+						"name": "API_KEY_MANAGER",
+						"class_name": "ApiKeyManagerProduction"
+					}
+				]
+			},
+			"migrations": [
+				{
+					"tag": "v1",
+					"new_classes": [
+						"ApiKeyManagerProduction"
+					]
+				}
+			],
+			"routes": [
+				{
+					"pattern": "disposablecheck.irensaltali.com/api/*",
+					"zone_name": "irensaltali.com"
+				}
+			]
+		}
+	}
+}
