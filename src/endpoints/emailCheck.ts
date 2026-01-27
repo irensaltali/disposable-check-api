@@ -5,6 +5,12 @@ import { getDisposableDomains } from "../domainList";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const ALLOWED_ORIGINS = [
+    "https://disposablecheck.irensaltali.com",
+    "http://localhost:5173",
+    "http://localhost:8787",
+];
+
 export class EmailCheck extends OpenAPIRoute {
     schema = {
         tags: ["Email"],
@@ -20,7 +26,7 @@ export class EmailCheck extends OpenAPIRoute {
                 }),
             }),
             headers: z.object({
-                "x-api-key": Str({ description: "Your API key" }),
+                "x-api-key": Str({ description: "Your API key" }).optional(),
             }),
         },
         responses: {
@@ -48,25 +54,41 @@ export class EmailCheck extends OpenAPIRoute {
         const { email } = data.query;
         const apiKey = data.headers["x-api-key"];
 
-        // Validate API key
+        // Get DO stub
         const doId = c.env.API_KEY_MANAGER.idFromName("global");
         const stub = c.env.API_KEY_MANAGER.get(doId);
-        const validation = (await stub.validateAndIncrement(apiKey)) as {
-            valid: boolean;
-            email?: string;
-            remaining?: number;
-            error?: string;
-        };
 
-        if (!validation.valid) {
-            const status = validation.error?.includes("rate limit") ? 429 : 401;
-            return c.json(
-                {
-                    error: validation.error,
-                    code: status === 429 ? "RATE_LIMITED" : "UNAUTHORIZED",
-                },
-                status
-            );
+        if (apiKey) {
+            // Validate API key
+            const validation = (await stub.validateAndIncrement(apiKey)) as {
+                valid: boolean;
+                email?: string;
+                remaining?: number;
+                error?: string;
+            };
+
+            if (!validation.valid) {
+                const status = validation.error?.includes("rate limit") ? 429 : 401;
+                return c.json(
+                    {
+                        error: validation.error,
+                        code: status === 429 ? "RATE_LIMITED" : "UNAUTHORIZED",
+                    },
+                    status
+                );
+            }
+        } else {
+            // Check for trusted origin for website usage
+            const origin = c.req.header("Origin");
+            if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+                return c.json(
+                    { error: "Missing API key", code: "UNAUTHORIZED" },
+                    401
+                );
+            }
+
+            // Valid origin, increment global stats
+            await stub.incrementGlobalCheckCount();
         }
 
         // Validate email format
