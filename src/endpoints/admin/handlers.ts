@@ -5,6 +5,7 @@ import {
     ADMIN_SECRET_HEADER,
 } from "../../middleware/adminAuth";
 import type { AdminAccountInfo } from "../../ApiKeyManager";
+import { updateDomainList } from "../../domainList";
 
 // Type for our Hono context with Env bindings
 type AdminContext = Context<{ Bindings: Env }>;
@@ -215,4 +216,34 @@ export async function listAdminAccounts(c: AdminContext) {
         limit: filters.limit,
         offset: filters.offset,
     });
+}
+
+/**
+ * POST /api/v1/admin/domains/update
+ * Force update the domain blocklist
+ */
+export async function forceUpdateDomainList(c: AdminContext) {
+    // Validate admin secret
+    const providedSecret = c.req.header(ADMIN_SECRET_HEADER);
+    if (!validateAdminSecret(providedSecret, c.env.ADMIN_API_SECRET)) {
+        return c.json(
+            { error: "Unauthorized", code: "UNAUTHORIZED" },
+            401
+        );
+    }
+
+    try {
+        const count = await updateDomainList(c.env);
+        return c.json({
+            success: true,
+            count: count,
+            message: `Successfully updated domain list with ${count} domains`,
+        });
+    } catch (error) {
+        console.error("Failed to update domain list:", error);
+        return c.json(
+            { error: "Failed to update domain list", code: "INTERNAL_ERROR", details: String(error) },
+            500
+        );
+    }
 }

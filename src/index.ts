@@ -9,6 +9,7 @@ import {
 	getAdminAccount,
 	updateAccountLimit,
 	listAdminAccounts,
+	forceUpdateDomainList,
 } from "./endpoints/admin/handlers";
 import { updateDomainList } from "./domainList";
 import { ADMIN_SECRET_HEADER } from "./middleware/adminAuth";
@@ -67,6 +68,7 @@ openapi.get("/api/v1/stats", GetStats);
 app.get("/api/v1/admin/accounts/:email", getAdminAccount);
 app.patch("/api/v1/admin/accounts/:email/limit", updateAccountLimit);
 app.get("/api/v1/admin/accounts", listAdminAccounts);
+app.post("/api/v1/admin/domains/update", forceUpdateDomainList);
 
 export default {
 	fetch: app.fetch,
