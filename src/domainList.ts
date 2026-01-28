@@ -4,6 +4,8 @@ const BLOCKLIST_URLS = [
     "https://raw.githubusercontent.com/7c/fakefilter/main/txt/data.txt",
     "https://raw.githubusercontent.com/disposable-email-domains/disposable-email-domains/main/disposable_email_blocklist.conf",
     "https://raw.githubusercontent.com/wesbos/burner-email-providers/master/emails.txt",
+    "https://disposable.github.io/disposable-email-domains/domains.txt",
+    "https://raw.githubusercontent.com/unkn0w/disposable-email-domain-list/main/domains.txt",
 ];
 
 const R2_KEY = "disposable-domains.txt";
