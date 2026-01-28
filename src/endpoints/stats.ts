@@ -23,19 +23,16 @@ export class GetStats extends OpenAPIRoute {
         const globalStats = (await stub.getGlobalStats()) as {
             totalEmailsChecked: number;
             totalApiKeys: number;
+            communityReports: number;
         };
 
         // Get domain count from R2
         const totalDisposableDomains = await getDisposableDomainsCount(c.env);
 
-        // Community reports - stored in R2 metadata or default to a placeholder
-        // For now, we'll track this as a growing metric
-        const communityReports = await this.getCommunityReports(c);
-
         return c.json({
             total_emails_checked: globalStats.totalEmailsChecked,
             total_disposable_domains: totalDisposableDomains,
-            community_reports: communityReports,
+            community_reports: globalStats.communityReports,
         });
     }
 

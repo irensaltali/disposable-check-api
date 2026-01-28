@@ -25,6 +25,12 @@ export interface AdminAccountInfo {
     customDailyLimit?: number;
 }
 
+export interface ReportedDomain {
+    domain: string;
+    reason?: string;
+    createdAt: string;
+}
+
 export class ApiKeyManager extends DurableObject {
     private async getKeyData(email: string): Promise<ApiKeyData | null> {
         const data = await this.ctx.storage.get<ApiKeyData>(`key:${email}`);
@@ -159,12 +165,55 @@ export class ApiKeyManager extends DurableObject {
         return newCount;
     }
 
+
+    // ==================== REPORTING METHODS ====================
+
+    async reportDomain(domain: string, reason?: string): Promise<void> {
+        // Increment global counter
+        const current = await this.ctx.storage.get<number>("global:communityReports") || 0;
+        await this.ctx.storage.put("global:communityReports", current + 1);
+
+        // Store report entry
+        // Key format: report:<timestamp>:<domain> to allow time-based listing
+        const now = Date.now();
+        await this.ctx.storage.put(`report:${now}:${domain}`, {
+            domain,
+            reason,
+            createdAt: new Date(now).toISOString()
+        });
+    }
+
+    async listReportedDomains(limit = 100, offset = 0): Promise<{ reports: ReportedDomain[], total: number }> {
+        const cappedLimit = Math.min(limit, 1000);
+
+        // List all reports
+        // durable objects list() returns keys in lexicographical order. 
+        // report:<timestamp> means older first. 
+        // If we want newest first, we might need reverse iteration, 
+        // but standard list() + reverse in memory is okay for reasonable sizes.
+        // If size is huge, we might need a better index structure, but for now this is fine.
+        const entries = await this.ctx.storage.list<ReportedDomain>({ prefix: "report:" });
+        const allReports = Array.from(entries.values());
+
+        // Sort by date descending (newest first)
+        allReports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        const paginated = allReports.slice(offset, offset + cappedLimit);
+
+        return {
+            reports: paginated,
+            total: allReports.length
+        };
+    }
+
     // Get global stats
     async getGlobalStats(): Promise<{
         totalEmailsChecked: number;
         totalApiKeys: number;
+        communityReports: number;
     }> {
         const totalEmailsChecked = await this.ctx.storage.get<number>("global:totalEmailsChecked") || 0;
+        const communityReports = await this.ctx.storage.get<number>("global:communityReports") || 0;
 
         // Count API keys by listing all key: prefixed entries
         const entries = await this.ctx.storage.list({ prefix: "key:" });
@@ -173,6 +222,7 @@ export class ApiKeyManager extends DurableObject {
         return {
             totalEmailsChecked,
             totalApiKeys,
+            communityReports,
         };
     }
 

@@ -247,3 +247,31 @@ export async function forceUpdateDomainList(c: AdminContext) {
         );
     }
 }
+
+/**
+ * GET /api/v1/admin/reports
+ * List reported domains
+ */
+export async function getReportedDomains(c: AdminContext) {
+    // Validate admin secret
+    const providedSecret = c.req.header(ADMIN_SECRET_HEADER);
+    if (!validateAdminSecret(providedSecret, c.env.ADMIN_API_SECRET)) {
+        return c.json(
+            { error: "Unauthorized", code: "UNAUTHORIZED" },
+            401
+        );
+    }
+
+    const limitParam = c.req.query("limit");
+    const offsetParam = c.req.query("offset");
+
+    const limit = limitParam ? parseInt(limitParam, 10) : 100;
+    const offset = offsetParam ? parseInt(offsetParam, 10) : 0;
+
+    const doId = c.env.API_KEY_MANAGER.idFromName("global");
+    const stub = c.env.API_KEY_MANAGER.get(doId);
+
+    const result = await stub.listReportedDomains(limit, offset);
+
+    return c.json(result);
+}

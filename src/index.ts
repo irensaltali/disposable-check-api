@@ -5,11 +5,13 @@ import { EmailCheck } from "./endpoints/emailCheck";
 import { CreateKey } from "./endpoints/createKey";
 import { GetKeyInfo } from "./endpoints/getKeyInfo";
 import { GetStats } from "./endpoints/stats";
+import { ReportDomain } from "./endpoints/report";
 import {
 	getAdminAccount,
 	updateAccountLimit,
 	listAdminAccounts,
 	forceUpdateDomainList,
+	getReportedDomains,
 } from "./endpoints/admin/handlers";
 import { updateDomainList } from "./domainList";
 import { ADMIN_SECRET_HEADER } from "./middleware/adminAuth";
@@ -62,6 +64,7 @@ openapi.get("/api/v1/check", EmailCheck);
 openapi.post("/api/v1/keys", CreateKey);
 openapi.get("/api/v1/keys/:email", GetKeyInfo);
 openapi.get("/api/v1/stats", GetStats);
+openapi.post("/api/v1/report", ReportDomain);
 
 // Admin Endpoints - NOT in public OpenAPI docs
 // These are registered directly on Hono, not through chanfana's openapi
@@ -69,6 +72,7 @@ app.get("/api/v1/admin/accounts/:email", getAdminAccount);
 app.patch("/api/v1/admin/accounts/:email/limit", updateAccountLimit);
 app.get("/api/v1/admin/accounts", listAdminAccounts);
 app.post("/api/v1/admin/domains/update", forceUpdateDomainList);
+app.get("/api/v1/admin/reports", getReportedDomains);
 
 export default {
 	fetch: app.fetch,
