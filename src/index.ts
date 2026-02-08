@@ -22,6 +22,7 @@ export { ApiKeyManager } from "./ApiKeyManager";
 // Export environment-specific Durable Object classes (same class, different namespaces for isolation)
 export { ApiKeyManager as ApiKeyManagerStaging } from "./ApiKeyManager";
 export { ApiKeyManager as ApiKeyManagerProduction } from "./ApiKeyManager";
+export { ReacherWorker, ContainerWorker } from "./ContainerWorker";
 
 const app = new Hono<{ Bindings: Env }>();
 

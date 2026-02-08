@@ -20,14 +20,36 @@
 			{
 				"name": "API_KEY_MANAGER",
 				"class_name": "ApiKeyManager"
+			},
+			{
+				"name": "CONTAINER_WORKER",
+				"class_name": "ReacherWorker"
 			}
 		]
 	},
+	"containers": [
+		{
+			"class_name": "ReacherWorker",
+			"image": "./container/Dockerfile"
+		}
+	],
 	"migrations": [
 		{
 			"tag": "v1",
 			"new_classes": [
 				"ApiKeyManager"
+			]
+		},
+		{
+			"tag": "v2",
+			"new_classes": [
+				"ContainerWorker"
+			]
+		},
+		{
+			"tag": "v3",
+			"new_sqlite_classes": [
+				"ReacherWorker"
 			]
 		}
 	],
@@ -50,6 +72,10 @@
 					{
 						"name": "API_KEY_MANAGER",
 						"class_name": "ApiKeyManagerStaging"
+					},
+					{
+						"name": "CONTAINER_WORKER", // Reuse same class for staging/prod logic if needed, or subclass
+						"class_name": "ReacherWorker"
 					}
 				]
 			},
@@ -59,6 +85,24 @@
 					"new_classes": [
 						"ApiKeyManagerStaging"
 					]
+				},
+				{
+					"tag": "v2",
+					"new_classes": [
+						"ContainerWorker"
+					]
+				},
+				{
+					"tag": "v3",
+					"new_sqlite_classes": [
+						"ReacherWorker"
+					]
+				}
+			],
+			"containers": [
+				{
+					"class_name": "ReacherWorker",
+					"image": "./container/Dockerfile"
 				}
 			]
 		},
@@ -75,6 +119,10 @@
 					{
 						"name": "API_KEY_MANAGER",
 						"class_name": "ApiKeyManagerProduction"
+					},
+					{
+						"name": "CONTAINER_WORKER",
+						"class_name": "ReacherWorker"
 					}
 				]
 			},
@@ -84,12 +132,30 @@
 					"new_classes": [
 						"ApiKeyManagerProduction"
 					]
+				},
+				{
+					"tag": "v2",
+					"new_classes": [
+						"ContainerWorker"
+					]
+				},
+				{
+					"tag": "v3",
+					"new_sqlite_classes": [
+						"ReacherWorker"
+					]
 				}
 			],
 			"routes": [
 				{
 					"pattern": "disposablecheck.irensaltali.com/api/*",
 					"zone_name": "irensaltali.com"
+				}
+			],
+			"containers": [
+				{
+					"class_name": "ReacherWorker",
+					"image": "./container/Dockerfile"
 				}
 			]
 		}

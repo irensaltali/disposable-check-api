@@ -31,7 +31,7 @@ export interface ReportedDomain {
     createdAt: string;
 }
 
-export class ApiKeyManager extends DurableObject {
+export class ApiKeyManager extends DurableObject<Env> {
     private async getKeyData(email: string): Promise<ApiKeyData | null> {
         const data = await this.ctx.storage.get<ApiKeyData>(`key:${email}`);
         if (!data) return null;

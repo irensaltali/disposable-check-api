@@ -10,6 +10,7 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
+    "@cloudflare/containers": "^0.1.0",
     "chanfana": "^2.6.3",
     "hono": "^4.6.20",
     "resend": "^6.8.0",

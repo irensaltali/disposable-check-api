@@ -13,6 +13,29 @@ export const EmailCheckResponse = z.object({
 	is_disposable: Bool({ example: true }),
 	is_valid_format: Bool({ example: true }),
 	checked_at: DateTime(),
+	reacher: z.object({
+		is_reachable: Str({ example: "safe" }),
+		misc: z.object({
+			is_disposable: Bool({ example: true }),
+			is_role_account: Bool({ example: false }),
+		}),
+		mx: z.object({
+			accepts_mail: Bool({ example: true }),
+			records: z.array(Str()),
+		}),
+		smtp: z.object({
+			can_connect_smtp: Bool({ example: true }),
+			has_full_inbox: Bool({ example: false }),
+			is_catch_all: Bool({ example: false }),
+			is_deliverable: Bool({ example: true }),
+			is_disabled: Bool({ example: false }),
+		}),
+		syntax: z.object({
+			is_valid_syntax: Bool({ example: true }),
+			username: Str({ example: "user" }),
+			domain: Str({ example: "tempmail.com" }),
+		}),
+	}).optional(),
 });
 
 // API key creation request

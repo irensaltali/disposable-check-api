@@ -44,11 +44,12 @@ Check if an email address is from a disposable email provider.
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `email` | Yes | Email address to check |
+| `check_reachable` | No | Set to `true` to perform deep SMTP/MX verification (default: `false`) |
 
 **Example Request**:
 ```bash
 curl -X GET \
-  'https://disposablecheck.irensaltali.com/api/v1/check?email=user@tempmail.com' \
+  'https://disposablecheck.irensaltali.com/api/v1/check?email=user@tempmail.com&check_reachable=true' \
   -H 'X-API-Key: your_api_key_here'
 ```
 
@@ -59,7 +60,30 @@ curl -X GET \
   "domain": "tempmail.com",
   "is_disposable": true,
   "is_valid_format": true,
-  "checked_at": "2026-01-27T10:30:00Z"
+  "checked_at": "2026-01-27T10:30:00Z",
+  "reacher": {
+    "is_reachable": "safe",
+    "misc": {
+        "is_disposable": false,
+        "is_role_account": false
+    },
+    "mx": {
+        "accepts_mail": true,
+        "records": ["aspmx.l.google.com."]
+    },
+    "smtp": {
+        "can_connect_smtp": true,
+        "has_full_inbox": false,
+        "is_catch_all": false,
+        "is_deliverable": true,
+        "is_disabled": false
+    },
+    "syntax": {
+        "is_valid_syntax": true,
+        "username": "user",
+        "domain": "tempmail.com"
+    }
+  }
 }
 ```
 
