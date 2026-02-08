@@ -6,13 +6,17 @@
   # 🛡️ DisposableCheck API
 
   **Free Disposable Email Detection API**
+  
+  [![API Docs](https://img.shields.io/badge/API-Documentation-green?style=flat-square)](https://disposablecheck.irensaltali.com/api)
+  [![OpenAPI](https://img.shields.io/badge/OpenAPI-3.1-orange?style=flat-square)](https://disposablecheck.irensaltali.com/api)
 
+  <br />
+  <a href="https://www.buymeacoffee.com/irensaltali" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+  <br />
   <a href="https://www.producthunt.com/products/disposablecheck-disposable-email-check?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-disposablecheck-disposable-email-check" target="_blank">
     <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1068935&theme=light" alt="DisposableCheck – Disposable Email Check - Free Disposable Email Detector & API | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" />
   </a>
-
-  [![API Docs](https://img.shields.io/badge/API-Documentation-green?style=flat-square)](https://disposablecheck.irensaltali.com/api)
-  [![OpenAPI](https://img.shields.io/badge/OpenAPI-3.1-orange?style=flat-square)](https://disposablecheck.irensaltali.com/api)
 </div>
 
 ![DisposableCheck Banner](https://raw.githubusercontent.com/irensaltali/disposable-check-all/main/disposable-check/public/og-image.png)
