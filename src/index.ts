@@ -41,9 +41,9 @@ app.use(
 	})
 );
 
-// OpenAPI docs at root
+// OpenAPI docs at /api (matches the wrangler route pattern so the Swagger UI is reachable)
 const openapi = fromHono(app, {
-	docs_url: "/",
+	docs_url: "/api",
 	schema: {
 		info: {
 			title: "DisposableCheck API",
@@ -59,6 +59,9 @@ const openapi = fromHono(app, {
 		],
 	},
 });
+
+// Redirect bare /api/ to /api so the docs UI is reachable from either form
+app.get("/api/", (c) => c.redirect("/api", 301));
 
 // Public Endpoints - /api prefix matches the production route pattern
 openapi.get("/api/v1/check", EmailCheck);

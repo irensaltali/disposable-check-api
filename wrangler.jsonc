@@ -148,6 +148,10 @@
 			],
 			"routes": [
 				{
+					"pattern": "disposablecheck.irensaltali.com/api",
+					"zone_name": "irensaltali.com"
+				},
+				{
 					"pattern": "disposablecheck.irensaltali.com/api/*",
 					"zone_name": "irensaltali.com"
 				}
