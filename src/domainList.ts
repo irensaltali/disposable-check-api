@@ -1,24 +1,40 @@
 // Env is globally defined in worker-configuration.d.ts
 
 const BLOCKLIST_URLS = [
-    "https://raw.githubusercontent.com/7c/fakefilter/main/txt/data.txt",
+    // --- High-accuracy, community-vetted (low false-positive rate) ---
     "https://raw.githubusercontent.com/disposable-email-domains/disposable-email-domains/main/disposable_email_blocklist.conf",
-    "https://raw.githubusercontent.com/wesbos/burner-email-providers/master/emails.txt",
-    "https://disposable.github.io/disposable-email-domains/domains.txt",
+    "https://raw.githubusercontent.com/7c/fakefilter/main/txt/data.txt",
     "https://raw.githubusercontent.com/unkn0w/disposable-email-domain-list/main/domains.txt",
+
+    // --- Large aggregated / automated lists ---
+    "https://raw.githubusercontent.com/FGRibreau/mailchecker/master/list.txt",                                                  // +55k domains
+    "https://raw.githubusercontent.com/doodad-labs/throwaway-email-checker/refs/heads/main/data/domains.txt",                  // +183k domains
+    "https://disposable.github.io/disposable-email-domains/domains_mx.txt",                                                    // DNS-validated subset
+    "https://disposable.github.io/disposable-email-domains/domains.txt",                                                       // full list
+
+    // --- Anti-abuse / broader coverage ---
+    "https://www.stopforumspam.com/downloads/toxic_domains_whole.txt",
+    "https://github.com/groundcat/disposable-email-domain-list/raw/master/domains.txt",
+
+    // --- Community-maintained ---
+    "https://raw.githubusercontent.com/wesbos/burner-email-providers/master/emails.txt",
 ];
 
 const R2_KEY = "disposable-domains.txt";
 
-// In-memory cache with TTL
-let cachedDomains: Set<string> | null = null;
-let cacheTime = 0;
+interface CacheEntry {
+    domains: Set<string>;
+    expiresAt: number;
+}
+
 const CACHE_TTL_MS = 300000; // 5 minutes in-memory cache
+let cache: CacheEntry | null = null;
 
 async function fetchDomainList(url: string): Promise<string[]> {
     try {
         const response = await fetch(url, {
             headers: { "User-Agent": "DisposableCheck/1.0" },
+            signal: AbortSignal.timeout(10_000),
         });
         if (!response.ok) return [];
         const text = await response.text();
@@ -46,12 +62,12 @@ export async function updateDomainList(env: Env): Promise<number> {
         customMetadata: {
             count: String(allDomains.length),
             updatedAt: new Date().toISOString(),
+            sources: String(BLOCKLIST_URLS.length),
         },
     });
 
-    // Clear in-memory cache
-    cachedDomains = null;
-    cacheTime = 0;
+    // Invalidate in-memory cache
+    cache = null;
 
     return allDomains.length;
 }
@@ -60,12 +76,10 @@ export async function updateDomainList(env: Env): Promise<number> {
 export async function getDisposableDomains(env: Env): Promise<Set<string>> {
     const now = Date.now();
 
-    // Return cached if fresh
-    if (cachedDomains && now - cacheTime < CACHE_TTL_MS) {
-        return cachedDomains;
+    if (cache && cache.expiresAt > now) {
+        return cache.domains;
     }
 
-    // Try to get from R2
     const object = await env.DOMAINS_BUCKET.get(R2_KEY);
     if (!object) {
         // R2 empty, fetch and populate
@@ -74,12 +88,15 @@ export async function getDisposableDomains(env: Env): Promise<Set<string>> {
     }
 
     const text = await object.text();
-    const domains = text.split("\n").filter((d) => d);
+    const domains = new Set(
+        text
+            .split("\n")
+            .map((d) => d.trim().toLowerCase())
+            .filter((d) => d && d.includes("."))
+    );
 
-    cachedDomains = new Set(domains);
-    cacheTime = now;
-
-    return cachedDomains;
+    cache = { domains, expiresAt: now + CACHE_TTL_MS };
+    return domains;
 }
 
 // Get the count of disposable domains from R2 metadata
