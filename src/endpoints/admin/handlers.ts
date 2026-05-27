@@ -46,6 +46,7 @@ export async function getAdminAccount(c: AdminContext) {
 
     return c.json({
         email: account.email,
+        api_key: account.apiKey,
         created_at: account.createdAt,
         total_usage: account.totalUsage,
         requests_today: account.requestsToday,

@@ -18,6 +18,7 @@ const MAX_DAILY_LIMIT = 1000000;
 // Admin response type for account info
 export interface AdminAccountInfo {
     email: string;
+    apiKey: string;
     createdAt: string;
     totalUsage: number;
     requestsToday: number;
@@ -241,6 +242,7 @@ export class ApiKeyManager extends DurableObject<Env> {
 
         return {
             email: data.email,
+            apiKey: data.apiKey,
             createdAt: data.createdAt,
             totalUsage: data.totalUsage || 0,
             requestsToday,
@@ -330,6 +332,7 @@ export class ApiKeyManager extends DurableObject<Env> {
 
             allAccounts.push({
                 email: data.email,
+                apiKey: data.apiKey,
                 createdAt: data.createdAt,
                 totalUsage,
                 requestsToday,
